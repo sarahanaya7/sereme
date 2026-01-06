@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -45,6 +46,14 @@
             text-transform: uppercase;
         }
 
+        .bank-box {
+            background-color: #f0fdf4;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--serene-accent);
+        }
+
         .admin-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -74,6 +83,16 @@
             outline: none;
         }
 
+        .coin-header-row td {
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--serene-green);
+            padding: 15px 0 5px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -94,9 +113,7 @@
             border-bottom: 1px solid #f9f9f9;
         }
 
-        .denom-label {
-            font-weight: 600;
-        }
+        .denom-label { font-weight: 600; }
 
         .qty-input {
             width: 80px;
@@ -104,12 +121,6 @@
             border: 1px solid #eee;
             border-radius: 6px;
             text-align: center;
-        }
-
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
         }
 
         .total-cell {
@@ -120,10 +131,11 @@
 
         .grand-total-section {
             margin-top: 30px;
-            padding: 20px;
+            padding: 25px;
             background-color: var(--serene-light);
             border-radius: 12px;
             text-align: center;
+            border: 1px solid #e2e8f0;
         }
 
         #grand-total {
@@ -153,9 +165,7 @@
             color: white;
         }
 
-        .btn-download:hover {
-            background-color: #3a6347;
-        }
+        .btn-download:hover { background-color: #3a6347; }
     </style>
 </head>
 <body>
@@ -164,6 +174,18 @@
     <div class="header">
         <h1>Serene</h1>
         <p>Currency Automation System</p>
+    </div>
+
+    <div class="bank-box">
+        <div class="admin-field" style="margin-bottom: 10px;">
+            <label style="color: var(--serene-green); font-weight: bold;">Shift Name/Time</label>
+            <input type="text" class="admin-input" id="shiftName" placeholder="e.g. Morning Shift" style="font-weight: bold;">
+        </div>
+        <div class="admin-field">
+            <label style="color: var(--serene-green); font-weight: bold;">Beginning Bank ($)</label>
+            <input type="text" class="admin-input" id="beginningBank" placeholder="Enter amount" 
+                   oninput="calculate()" onblur="formatValue(this)" style="font-size: 1.2rem; font-weight: bold;">
+        </div>
     </div>
 
     <div class="admin-section">
@@ -193,7 +215,7 @@
     </table>
 
     <div class="grand-total-section">
-        <span style="font-size: 0.8rem; text-transform: uppercase; color: #666;">Grand Total Balance</span><br>
+        <span style="font-size: 0.8rem; text-transform: uppercase; color: #666; font-weight: bold; letter-spacing: 1px;">Ending Bank</span><br>
         <span id="grand-total">$0.00</span>
     </div>
 </div>
@@ -203,7 +225,6 @@
 </div>
 
 <script>
-    // Updated list with 1 dollar and half dollar coins
     const denominations = [
         { label: '$100 Bills', value: 100 },
         { label: '$50 Bills', value: 50 },
@@ -220,66 +241,80 @@
         { label: '1¢ Coins (Pennies)', value: 0.01 }
     ];
 
-    // Set real-time date
     document.getElementById('timestamp').value = new Date().toLocaleString();
-
     const tableBody = document.getElementById('currency-rows');
 
     denominations.forEach((denom, index) => {
+        if (index === 7) {
+            const coinHeader = document.createElement('tr');
+            coinHeader.className = 'coin-header-row';
+            coinHeader.innerHTML = `<td colspan="3">Coins</td>`;
+            tableBody.appendChild(coinHeader);
+        }
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="denom-label">${denom.label}</td>
-            <td>
-                <input type="number" id="qty-${index}" class="qty-input" min="0" value="0" oninput="calculate()">
-            </td>
+            <td><input type="number" id="qty-${index}" class="qty-input" min="0" value="0" oninput="calculate()"></td>
             <td class="total-cell">$<span id="total-${index}">0.00</span></td>
         `;
         tableBody.appendChild(row);
     });
 
+    function formatValue(input) {
+        if (input.value.trim() === "") return;
+        let cleanValue = input.value.replace(/[^0-9.]/g, '');
+        let number = parseFloat(cleanValue);
+        if (!isNaN(number)) {
+            input.value = number.toFixed(2);
+        }
+        calculate(); 
+    }
+
     function calculate() {
-        let grandTotal = 0;
+        let bankValue = document.getElementById('beginningBank').value.replace(/[^0-9.]/g, '');
+        let startAmount = parseFloat(bankValue) || 0;
+        let runningTotal = startAmount;
+
         denominations.forEach((denom, index) => {
             const qty = parseFloat(document.getElementById(`qty-${index}`).value) || 0;
             const rowTotal = qty * denom.value;
             document.getElementById(`total-${index}`).innerText = rowTotal.toFixed(2);
-            grandTotal += rowTotal;
+            runningTotal += rowTotal;
         });
-        document.getElementById('grand-total').innerText = '$' + grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+        
+        document.getElementById('grand-total').innerText = '$' + runningTotal.toLocaleString(undefined, {minimumFractionDigits: 2});
     }
 
     function exportToDoc() {
         const firstName = document.getElementById('firstName').value || "N/A";
         const lastName = document.getElementById('lastName').value || "N/A";
-        const dateStr = new Date().toLocaleString();
+        const shift = document.getElementById('shiftName').value || "N/A";
+        let bankValue = document.getElementById('beginningBank').value.replace(/[^0-9.]/g, '');
+        const startBank = bankValue ? parseFloat(bankValue).toFixed(2) : "0.00";
         const totalAmount = document.getElementById('grand-total').innerText;
 
         let tableContent = "";
         denominations.forEach((denom, index) => {
             const qty = document.getElementById(`qty-${index}`).value || 0;
             const sub = document.getElementById(`total-${index}`).innerText;
-            if(qty > 0) { // Only include rows that have a quantity in the final report
-                tableContent += `<tr><td style="padding:5px;">${denom.label}</td><td style="padding:5px;">${qty}</td><td style="padding:5px;">$${sub}</td></tr>`;
+            if(qty > 0) {
+                tableContent += `<tr><td>${denom.label}</td><td>${qty}</td><td>$${sub}</td></tr>`;
             }
         });
 
         const htmlContent = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head><meta charset="utf-8"></head>
-            <body style="font-family: Arial, sans-serif;">
-                <h1 style="color:#4a7c59;">SERENE CURRENCY REPORT</h1>
-                <p><strong>Teller Name:</strong> ${firstName} ${lastName}</p>
-                <p><strong>Generated On:</strong> ${dateStr}</p>
+            <body>
+                <h1>Serene Report: ${firstName} ${lastName}</h1>
+                <p><strong>Shift:</strong> ${shift}</p>
+                <p><strong>Beginning Bank:</strong> $${startBank}</p>
                 <hr>
-                <table border="1" style="width:100%; border-collapse:collapse;">
-                    <thead style="background-color:#f8faf9;">
-                        <tr><th>Denomination</th><th>Quantity</th><th>Subtotal</th></tr>
-                    </thead>
+                <table border="1">
+                    <thead><tr><th>Denomination</th><th>Qty</th><th>Subtotal</th></tr></thead>
                     <tbody>${tableContent}</tbody>
                 </table>
-                <h2 style="text-align:right;">Grand Total: ${totalAmount}</h2>
-            </body>
-            </html>`;
+                <h2>Ending Bank Total: ${totalAmount}</h2>
+            </body></html>`;
 
         const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
         const url = URL.createObjectURL(blob);
@@ -287,9 +322,7 @@
         link.href = url;
         link.download = `Serene_Report_${lastName}.doc`;
         link.click();
-        URL.revokeObjectURL(url);
     }
 </script>
-
 </body>
 </html>
