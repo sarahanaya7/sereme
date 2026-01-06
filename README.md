@@ -81,6 +81,7 @@
             padding: 5px 0;
             font-size: 1rem;
             outline: none;
+            background: transparent;
         }
 
         .coin-header-row td {
@@ -88,7 +89,7 @@
             font-size: 0.9rem;
             font-weight: bold;
             color: var(--serene-green);
-            padding: 15px 0 5px 0;
+            padding: 25px 0 10px 0;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -241,7 +242,11 @@
         { label: '1¢ Coins (Pennies)', value: 0.01 }
     ];
 
-    document.getElementById('timestamp').value = new Date().toLocaleString();
+    function updateTime() {
+        document.getElementById('timestamp').value = new Date().toLocaleString();
+    }
+    updateTime();
+
     const tableBody = document.getElementById('currency-rows');
 
     denominations.forEach((denom, index) => {
@@ -304,16 +309,17 @@
 
         const htmlContent = `
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <body>
-                <h1>Serene Report: ${firstName} ${lastName}</h1>
+            <body style="font-family: Arial, sans-serif;">
+                <h1 style="color:#4a7c59;">Serene Currency Report</h1>
+                <p><strong>Teller:</strong> ${firstName} ${lastName}</p>
                 <p><strong>Shift:</strong> ${shift}</p>
                 <p><strong>Beginning Bank:</strong> $${startBank}</p>
                 <hr>
-                <table border="1">
-                    <thead><tr><th>Denomination</th><th>Qty</th><th>Subtotal</th></tr></thead>
+                <table border="1" style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="background:#f8faf9;"><th>Denomination</th><th>Qty</th><th>Subtotal</th></tr></thead>
                     <tbody>${tableContent}</tbody>
                 </table>
-                <h2>Ending Bank Total: ${totalAmount}</h2>
+                <h2 style="text-align:right; color:#4a7c59;">Ending Bank Total: ${totalAmount}</h2>
             </body></html>`;
 
         const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
@@ -322,6 +328,7 @@
         link.href = url;
         link.download = `Serene_Report_${lastName}.doc`;
         link.click();
+        URL.revokeObjectURL(url);
     }
 </script>
 </body>
