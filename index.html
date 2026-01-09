@@ -46,14 +46,6 @@
             text-transform: uppercase;
         }
 
-        .bank-box {
-            background-color: #f0fdf4;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border: 1px solid var(--serene-accent);
-        }
-
         .admin-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -177,26 +169,14 @@
         <p>Currency Automation System</p>
     </div>
 
-    <div class="bank-box">
-        <div class="admin-field" style="margin-bottom: 10px;">
-            <label style="color: var(--serene-green); font-weight: bold;">Shift Name/Time</label>
-            <input type="text" class="admin-input" id="shiftName" placeholder="e.g. Morning Shift" style="font-weight: bold;">
-        </div>
-        <div class="admin-field">
-            <label style="color: var(--serene-green); font-weight: bold;">Beginning Bank ($)</label>
-            <input type="text" class="admin-input" id="beginningBank" placeholder="Enter amount" 
-                   oninput="calculate()" onblur="formatValue(this)" style="font-size: 1.2rem; font-weight: bold;">
-        </div>
-    </div>
-
     <div class="admin-section">
         <div class="admin-field">
-            <label>First Name</label>
-            <input type="text" class="admin-input" id="firstName" placeholder="First Name">
+            <label>Name</label>
+            <input type="text" class="admin-input" id="userName" placeholder="Name">
         </div>
         <div class="admin-field">
-            <label>Last Name</label>
-            <input type="text" class="admin-input" id="lastName" placeholder="Last Name">
+            <label>Shift</label>
+            <input type="text" class="admin-input" id="shift" placeholder="Shift">
         </div>
         <div class="admin-field" style="grid-column: span 2;">
             <label>Report Date & Time</label>
@@ -265,20 +245,8 @@
         tableBody.appendChild(row);
     });
 
-    function formatValue(input) {
-        if (input.value.trim() === "") return;
-        let cleanValue = input.value.replace(/[^0-9.]/g, '');
-        let number = parseFloat(cleanValue);
-        if (!isNaN(number)) {
-            input.value = number.toFixed(2);
-        }
-        calculate(); 
-    }
-
     function calculate() {
-        let bankValue = document.getElementById('beginningBank').value.replace(/[^0-9.]/g, '');
-        let startAmount = parseFloat(bankValue) || 0;
-        let runningTotal = startAmount;
+        let runningTotal = 0;
 
         denominations.forEach((denom, index) => {
             const qty = parseFloat(document.getElementById(`qty-${index}`).value) || 0;
@@ -291,11 +259,8 @@
     }
 
     function exportToDoc() {
-        const firstName = document.getElementById('firstName').value || "N/A";
-        const lastName = document.getElementById('lastName').value || "N/A";
-        const shift = document.getElementById('shiftName').value || "N/A";
-        let bankValue = document.getElementById('beginningBank').value.replace(/[^0-9.]/g, '');
-        const startBank = bankValue ? parseFloat(bankValue).toFixed(2) : "0.00";
+        const name = document.getElementById('userName').value || "N/A";
+        const shift = document.getElementById('shift').value || "N/A";
         const totalAmount = document.getElementById('grand-total').innerText;
 
         let tableContent = "";
@@ -311,9 +276,8 @@
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <body style="font-family: Arial, sans-serif;">
                 <h1 style="color:#4a7c59;">Serene Currency Report</h1>
-                <p><strong>Teller:</strong> ${firstName} ${lastName}</p>
+                <p><strong>Name:</strong> ${name}</p>
                 <p><strong>Shift:</strong> ${shift}</p>
-                <p><strong>Beginning Bank:</strong> $${startBank}</p>
                 <hr>
                 <table border="1" style="width:100%; border-collapse:collapse;">
                     <thead><tr style="background:#f8faf9;"><th>Denomination</th><th>Qty</th><th>Subtotal</th></tr></thead>
@@ -326,7 +290,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Serene_Report_${lastName}.doc`;
+        link.download = `Serene_Report_${name.replace(/\s+/g, '_')}.doc`;
         link.click();
         URL.revokeObjectURL(url);
     }
